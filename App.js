@@ -1,12 +1,17 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Image, Button, Alert } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const [voted, setVoted] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
+  const [countdown, setCountdown] = useState('');
+  const countdownInterval = useRef(null);
+
+  const COOLDOWN_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'votes'), (snapshot) => {
@@ -15,31 +20,86 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const checkCooldown = async () => {
+      const lastVoteTime = await AsyncStorage.getItem('lastVoteTime');
+      if (lastVoteTime) {
+        const lastTime = parseInt(lastVoteTime);
+        const timeElapsed = Date.now() - lastTime;
+        const remaining = COOLDOWN_DURATION - timeElapsed;
+
+        if (remaining > 0) {
+          setVoted(true);
+          startCountdown(lastTime);
+        } else {
+          await AsyncStorage.removeItem('lastVoteTime');
+          setVoted(false);
+          setCountdown('');
+        }
+      }
+    };
+
+    checkCooldown();
+    return () => {
+      if (countdownInterval.current) clearInterval(countdownInterval.current);
+    };
+  }, []);
+
+  const startCountdown = (lastTime) => {
+    countdownInterval.current = setInterval(() => {
+      const now = Date.now();
+      const remaining = COOLDOWN_DURATION - (now - lastTime);
+
+      if (remaining <= 0) {
+        clearInterval(countdownInterval.current);
+        setVoted(false);
+        setCountdown('');
+        AsyncStorage.removeItem('lastVoteTime');
+      } else {
+        const hours = Math.floor(remaining / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        setCountdown(`${hours}h ${minutes}m ${seconds}s`);
+      }
+    }, 1000);
+  };
+
   const handleVote = async () => {
     try {
       await addDoc(collection(db, 'votes'), {
         timestamp: serverTimestamp(),
       });
+
+      const now = Date.now();
+      await AsyncStorage.setItem('lastVoteTime', now.toString());
+
       setVoted(true);
-      Alert.alert('Thank you for voting!', '', [{ text: 'OK', onPress: () => {} }]);
+      startCountdown(now);
+      Alert.alert('Thank you for voting!', '', [{ text: 'OK' }]);
     } catch (e) {
-      Alert.alert('Error occurred', '', [{ text: 'OK', onPress: () => {} }]);
+      Alert.alert('Error occurred', '', [{ text: 'OK' }]);
     }
   };
 
   return (
     <View style={styles.container}>
+      <View style={styles.topRight}>
+        {voted && countdown !== '' && <Text style={styles.timerText}>{countdown}</Text>}
+      </View>
+
       <Image
         source={require('./assets/logo.png')}
         style={{ width: 200, height: 150 }}
       />
       <Text>Do you want Hot Chocolate Machines in school?</Text>
       <Text style={{ fontSize: 24, margin: 10 }}>Votes: {voteCount}</Text>
+
       <Button
-        title={voted ? "Voted" : "Vote"}
+        title={voted ? `Voted — wait ${countdown}` : "Vote YES"}
         onPress={handleVote}
         disabled={voted}
       />
+
       <StatusBar style="auto" />
     </View>
   );
@@ -51,5 +111,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  topRight: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+  },
+  timerText: {
+    fontSize: 16,
+    color: '#ff5555',
+    fontWeight: 'bold',
   },
 });
