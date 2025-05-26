@@ -10,8 +10,7 @@ export default function App() {
   const [voteCount, setVoteCount] = useState(0);
   const [countdown, setCountdown] = useState('');
   const countdownInterval = useRef(null);
-
-  const COOLDOWN_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+  const COOLDOWN_DURATION = 24 * 60 * 60 * 1000; 
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'votes'), (snapshot) => {
