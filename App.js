@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Image, Button, Alert } from 'react-native';
+import { StyleSheet, Text, View, Image, Pressable, Modal, Button, Alert } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { db } from './firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
@@ -10,6 +10,7 @@ export default function App() {
   const [voteCount, setVoteCount] = useState(0);
   const [countdown, setCountdown] = useState('');
   const countdownInterval = useRef(null);
+  const [infoVisible, setInfoVisible] = useState(false); 
   const COOLDOWN_DURATION = 24 * 60 * 60 * 1000; 
 
   useEffect(() => {
@@ -83,8 +84,30 @@ export default function App() {
   return (
     <View style={styles.container}>
       <View style={styles.topRight}>
-        {voted && countdown !== '' && <Text style={styles.timerText}>{countdown}</Text>}
+        <Button title="Info" onPress={() => setInfoVisible(true)} />
       </View>
+
+      <Modal
+        visible={infoVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setInfoVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContent}>
+            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Info</Text>
+            <Text>
+              Vote if you want Hot Chocolate Machines! You can vote once every 24 hours. Votes are counted live. - Dhanvin, Student Councillor Vice Chair. App coded by Sharlene Tan Qin Ying, Yip Jia Yi, Tan Xin Tong Joy and Ye Ting Esther.
+            </Text>
+            <Pressable
+              style={styles.closeButton}
+              onPress={() => setInfoVisible(false)}
+            >
+              <Text style={{ color: '#fff' }}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <Image
         source={require('./assets/logo.png')}
@@ -116,9 +139,24 @@ const styles = StyleSheet.create({
     top: 50,
     right: 20,
   },
-  timerText: {
-    fontSize: 16,
-    color: '#ff5555',
-    fontWeight: 'bold',
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    width: 300,
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: '#007AFF',
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+    borderRadius: 8,
   },
 });
