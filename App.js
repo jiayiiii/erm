@@ -10,15 +10,8 @@ export default function App() {
   const [voteCount, setVoteCount] = useState(0);
   const [countdown, setCountdown] = useState('');
   const countdownInterval = useRef(null);
-  const [infoVisible, setInfoVisible] = useState(false); 
-  const COOLDOWN_DURATION = 24 * 60 * 60 * 1000; 
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'votes'), (snapshot) => {
-      setVoteCount(snapshot.size);
-    });
-    return () => unsubscribe();
-  }, []);
+  const [ShowInfo, setShowInfo] = useState(false); 
+  const timerrr = 24 * 60 * 60 * 1000; 
 
   useEffect(() => {
     const checkCooldown = async () => {
@@ -26,7 +19,7 @@ export default function App() {
       if (lastVoteTime) {
         const lastTime = parseInt(lastVoteTime);
         const timeElapsed = Date.now() - lastTime;
-        const remaining = COOLDOWN_DURATION - timeElapsed;
+        const remaining = timerrr - timeElapsed;
 
         if (remaining > 0) {
           setVoted(true);
@@ -48,7 +41,7 @@ export default function App() {
   const startCountdown = (lastTime) => {
     countdownInterval.current = setInterval(() => {
       const now = Date.now();
-      const remaining = COOLDOWN_DURATION - (now - lastTime);
+      const remaining = timerrr - (now - lastTime);
 
       if (remaining <= 0) {
         clearInterval(countdownInterval.current);
@@ -84,14 +77,14 @@ export default function App() {
   return (
     <View style={styles.container}>
       <View style={styles.topRight}>
-        <Button title="Info" onPress={() => setInfoVisible(true)} />
+        <Button title="Info" onPress={() => setShowInfo(true)} />
       </View>
 
       <Modal
-        visible={infoVisible}
+        visible={ShowInfo}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setInfoVisible(false)}
+        onRequestClose={() => setShowInfo(false)}
       >
         <View style={styles.modalBackground}>
           <View style={styles.modalContent}>
@@ -101,7 +94,7 @@ export default function App() {
             </Text>
             <Pressable
               style={styles.closeButton}
-              onPress={() => setInfoVisible(false)}
+              onPress={() => setShowInfo(false)}
             >
               <Text style={{ color: '#fff' }}>Close</Text>
             </Pressable>
@@ -121,6 +114,8 @@ export default function App() {
         onPress={handleVote}
         disabled={voted}
       />
+
+      <Text>Goal: 100000<Text/>
 
       <StatusBar style="auto" />
     </View>
