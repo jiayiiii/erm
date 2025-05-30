@@ -115,7 +115,6 @@ export default function App() {
         disabled={voted}
       />
 
-      <Text>Goal: 100000<Text/>
 
       <StatusBar style="auto" />
     </View>
