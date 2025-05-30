@@ -32,6 +32,13 @@ export default function App() {
       }
     };
 
+    useEffect(() => {
+  const unsubscribe = onSnapshot(collection(db, 'votes'), (snapshot) => {
+    setVoteCount(snapshot.size);
+  });
+  return () => unsubscribe();
+}, []);
+
     checkCooldown();
     return () => {
       if (countdownInterval.current) clearInterval(countdownInterval.current);
