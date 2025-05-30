@@ -2,7 +2,6 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCY2S6fmmPMI4JsdBSOoLcQ0ygdAhDmvUk",
   authDomain: "veact-47948.firebaseapp.com",
   projectId: "veact-47948",
   storageBucket: "veact-47948.appspot.com", 
